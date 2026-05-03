@@ -1,5 +1,9 @@
+const jwt = require('jsonwebtoken');
+const SECRET = "mysecretkey";
+
 const express = require('express');
 const app = express();
+
 
 app.use(express.json());
 
@@ -25,6 +29,36 @@ app.post('/signup', async (req, res) => {
   });
 
   res.json({ message: 'User created successfully' });
+});
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  // Find user
+  const user = users.find(u => u.email === email);
+
+  if (!user) {
+    return res.status(400).json({ error: 'User not found' });
+  }
+
+  // Compare password
+  const isMatch = await require('bcrypt').compare(password, user.password);
+
+  if (!isMatch) {
+    return res.status(400).json({ error: 'Invalid credentials' });
+  }
+
+  // Generate token
+  const token = jwt.sign(
+    { email: user.email },
+    SECRET,
+    { expiresIn: '1h' }
+  );
+
+  res.json({
+    message: 'Login successful',
+    token: token
+  });
 });
 
 app.listen(3000, () => {
